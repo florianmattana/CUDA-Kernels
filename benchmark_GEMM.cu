@@ -33,10 +33,15 @@ int main ()
     matrix_C.width = N;
     matrix_C.stride = matrix_C.width;
 
+
+
     size_t sizeC = matrix_C.height * matrix_C.width;
     size_t bytes_C = sizeC * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_C.data, bytes_C));
-    
+
+    init_matrix(matrix_A.data, sizeA);
+    init_matrix(matrix_B.data, sizeB);
+
     float *d_matrix_A, *d_matrix_B, *d_matrix_C;
 
     CC(cudaMalloc(&d_matrix_A, bytes_A));
