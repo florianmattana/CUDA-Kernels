@@ -9,8 +9,11 @@
 
 int main ()
 {
-    const int M = 2000, N = 2000, K = 500;
-    
+    uint32_t seed = 132;
+    int M = 256;   // batch size (nb d'images / exemples traités ensemble)
+    int K = 784;   // nb de features en entrée (ex: MNIST 28*28 = 784)
+    int N = 10;    // nb de classes de sortie (0..9)
+
     Matrix matrix_A;
     matrix_A.height = M;
     matrix_A.width = K;
@@ -38,8 +41,8 @@ int main ()
     size_t bytes_C = sizeC * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_C.data, bytes_C));
     
-    init_matrix(matrix_A.data, sizeA);
-    init_matrix(matrix_B.data, sizeB);
+    init_activation_relu(matrix_A.data, M, K, seed);
+    init_weights_he_normal(matrix_B.data, K, M, seed);
 
     //==============================================CPU======================================================
 
@@ -52,7 +55,7 @@ int main ()
     CC(cudaMalloc(&d_matrix_B, bytes_B));
     CC(cudaMalloc(&d_matrix_C, bytes_C));
 
-    
+
 
     CC(cudaMemcpy(d_matrix_A, matrix_A.data, bytes_A, cudaMemcpyHostToDevice));
     CC(cudaMemcpy(d_matrix_B, matrix_B.data, bytes_B, cudaMemcpyHostToDevice));

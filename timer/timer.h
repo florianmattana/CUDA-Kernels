@@ -1,3 +1,7 @@
+#include <chrono>
+#include <limits> 
+#include <algorithm>
+
 #include<cuda_runtime.h>
 #include "helpers/cuda_helpers.h"
 
@@ -52,8 +56,8 @@ GpuTiming measure_kernel_ms(F&& f, int warmup = 10, int iters = 100, cudaStream_
 //==============================TIMER CPU=================================================
 
 struct CpuTiming {
-    double avg_ms;
-    double min_ms;
+    float avg_ms;
+    float min_ms;
 };
 
 template <typename F>
@@ -63,8 +67,8 @@ CpuTiming measure_cpu_ms(F&& f, int warmup = 10, int iters = 100)
         f();
     }
 
-    float total = 0.0f;
-    float best  = std::numeric_limits<float>::max();
+    double total = 0.0;
+    double best  = std::numeric_limits<double>::infinity();
 
     for (int i = 0; i < iters; ++i)
     {
@@ -72,12 +76,13 @@ CpuTiming measure_cpu_ms(F&& f, int warmup = 10, int iters = 100)
         f();
         auto t1 = std::chrono::high_resolution_clock::now();
 
-        double delta_time = std::chrono::duration<double, std::milli>(t1 - t0).count();
-
-        total += delta_time;
-        best = std::min(best, delta_time);
+        double dt = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        total += dt;
+        best = std::min(best, dt);
     }
 
-    CpuTiming.avg_ms = total / iters;
-    CpuTiming.min_ms = best;
+    CpuTiming output;
+    output.avg_ms = (iters > 0) ? (total / iters) : 0.0;
+    output.min_ms = (iters > 0) ? best : 0.0;
+    return output;
 }
