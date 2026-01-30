@@ -1,0 +1,3 @@
+C:/Users/Florian/Desktop/kernel_experiment/build/CMakeFiles/run.dir
+C:/Users/Florian/Desktop/kernel_experiment/build/CMakeFiles/edit_cache.dir
+C:/Users/Florian/Desktop/kernel_experiment/build/CMakeFiles/rebuild_cache.dir

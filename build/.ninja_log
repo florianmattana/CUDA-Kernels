@@ -1,0 +1,6 @@
+# ninja log v6
+18	85	7914891163662972	CMakeFiles/run.dir/cpu_reference/cpu_reference.cpp.obj	6087cf0a5ada28fb
+9	1139	7914891163566587	CMakeFiles/run.dir/kernels/kernels.cu.obj	e7010740b28fbe3b
+2	2118	7914891163506742	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+13	2183	7914891163621215	CMakeFiles/run.dir/config/init_data.cu.obj	c7ac72d97dffaf43
+2184	2497	7914891185322142	run.exe	c7a6137c83324c11
