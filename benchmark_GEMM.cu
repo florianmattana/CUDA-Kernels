@@ -3,13 +3,14 @@
 #include "config/data_config.h"
 #include "timer/timer.h"
 #include "kernels/kernels.h"
+#include "cpu_reference/cpu_reference.h"
 
 #include<cuda_runtime.h>
 
 int main ()
 {
     const int M = 2000, N = 2000, K = 500;
-
+    
     Matrix matrix_A;
     matrix_A.height = M;
     matrix_A.width = K;
@@ -18,36 +19,40 @@ int main ()
     size_t sizeA = matrix_A.height * matrix_A.width;
     size_t bytes_A = sizeA * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_A.data, bytes_A));
-
+    
     Matrix matrix_B;
     matrix_B.height = K;
     matrix_B.width = N;
     matrix_B.stride = matrix_B.width;
-
+    
     size_t sizeB = matrix_B.height * matrix_B.width;
     size_t bytes_B = sizeB * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_B.data, bytes_B));
-
+    
     Matrix matrix_C;
     matrix_C.height = M;
     matrix_C.width = N;
     matrix_C.stride = matrix_C.width;
-
-
-
+    
     size_t sizeC = matrix_C.height * matrix_C.width;
     size_t bytes_C = sizeC * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_C.data, bytes_C));
-
+    
     init_matrix(matrix_A.data, sizeA);
     init_matrix(matrix_B.data, sizeB);
 
+    //==============================================CPU======================================================
+
+    auto timing_cpu = measure_cpu_ms([&](){cpu_gemm(matrix_A.data, matrix_B.data, matrix_C.data, M, K, N);});
+
+    //==============================================GPU======================================================
     float *d_matrix_A, *d_matrix_B, *d_matrix_C;
 
     CC(cudaMalloc(&d_matrix_A, bytes_A));
     CC(cudaMalloc(&d_matrix_B, bytes_B));
     CC(cudaMalloc(&d_matrix_C, bytes_C));
 
+    
 
     CC(cudaMemcpy(d_matrix_A, matrix_A.data, bytes_A, cudaMemcpyHostToDevice));
     CC(cudaMemcpy(d_matrix_B, matrix_B.data, bytes_B, cudaMemcpyHostToDevice));
@@ -62,6 +67,7 @@ int main ()
     auto timing_1 = measure_kernel_ms([&](){naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});
 
     CC(cudaMemcpy(matrix_C.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+
 
     CC(cudaFreeHost(matrix_A.data));
     CC(cudaFreeHost(matrix_B.data));
