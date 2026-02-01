@@ -9,9 +9,9 @@
 
 int main ()
 {
-    uint32_t seed = 132;
+
     int M = 256;   // batch size (nb d'images / exemples traités ensemble)
-    int K = 784;   // nb de features en entrée (ex: MNIST 28*28 = 784)
+    int K = 4096;   // nb de features en entrée (ex: MNIST 28*28 = 784)
     int N = 10;    // nb de classes de sortie (0..9)
 
     Matrix matrix_A;
@@ -21,6 +21,7 @@ int main ()
     
     size_t sizeA = matrix_A.height * matrix_A.width;
     size_t bytes_A = sizeA * sizeof(float);
+
     CC(cudaMallocHost((void**)&matrix_A.data, bytes_A));
     
     Matrix matrix_B;
@@ -30,6 +31,7 @@ int main ()
     
     size_t sizeB = matrix_B.height * matrix_B.width;
     size_t bytes_B = sizeB * sizeof(float);
+    
     CC(cudaMallocHost((void**)&matrix_B.data, bytes_B));
     
     Matrix matrix_C;
@@ -41,8 +43,16 @@ int main ()
     size_t bytes_C = sizeC * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_C.data, bytes_C));
     
-    init_activation_relu(matrix_A.data, M, K, seed);
-    init_weights_he_normal(matrix_B.data, K, M, seed);
+    init_activation_relu(matrix_A.data, matrix_A.height, matrix_A.width, 123);
+    init_weights_he_normal(matrix_B.data, matrix_B.height, matrix_B.width, 456);
+    
+    // for(int i = 0 ; i < 20 ; ++i)
+    // {
+    //     std::cout << "Matrix A index: "<< i << " --> "<< matrix_A.data[i] << std::endl;
+    //     std::cout << "Matrix B index: "<< i << " --> "<< matrix_B.data[i] << std::endl;
+    //     std::cout << "" << std::endl;
+        
+    // }
 
     //==============================================CPU======================================================
 
@@ -67,10 +77,12 @@ int main ()
                     1
                 );
 
-    auto timing_1 = measure_kernel_ms([&](){naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});
+    auto timing_kernel_1 = measure_kernel_ms([&](){naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});
+
+    std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
+    std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
 
     CC(cudaMemcpy(matrix_C.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
-
 
     CC(cudaFreeHost(matrix_A.data));
     CC(cudaFreeHost(matrix_B.data));

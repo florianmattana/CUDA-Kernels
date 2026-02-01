@@ -21,6 +21,7 @@ GpuTiming measure_kernel_ms(F&& f, int warmup = 10, int iters = 100, cudaStream_
     for (int i = 0; i < warmup; ++i) 
     {
         f();
+        CC(cudaGetLastError());
     }
     
     CC(cudaStreamSynchronize(stream));
@@ -32,6 +33,8 @@ GpuTiming measure_kernel_ms(F&& f, int warmup = 10, int iters = 100, cudaStream_
     {
         CC(cudaEventRecord(start, stream));
         f();
+        CC(cudaPeekAtLastError());
+        
         CC(cudaEventRecord(stop, stream));
         CC(cudaEventSynchronize(stop));
         

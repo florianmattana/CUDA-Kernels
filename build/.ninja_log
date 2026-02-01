@@ -1,6 +1,18 @@
 # ninja log v6
-18	85	7914891163662972	CMakeFiles/run.dir/cpu_reference/cpu_reference.cpp.obj	6087cf0a5ada28fb
+2879	3147	7916606713600551	run.exe	c7a6137c83324c11
+31	2876	7916606685106457	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
 9	1139	7914891163566587	CMakeFiles/run.dir/kernels/kernels.cu.obj	e7010740b28fbe3b
-2	2118	7914891163506742	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
 13	2183	7914891163621215	CMakeFiles/run.dir/config/init_data.cu.obj	c7ac72d97dffaf43
-2184	2497	7914891185322142	run.exe	c7a6137c83324c11
+18	85	7914891163662972	CMakeFiles/run.dir/cpu_reference/cpu_reference.cpp.obj	6087cf0a5ada28fb
+2	2131	7916609896516097	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2132	2386	7916609917804866	run.exe	c7a6137c83324c11
+66	2157	7916610624100594	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2198	2366	7916610645339954	run.exe	c7a6137c83324c11
+53	2339	7916610786618695	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2340	2574	7916610809506699	run.exe	c7a6137c83324c11
+63	2708	7916650464190627	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2710	2996	7916650490660815	run.exe	c7a6137c83324c11
+62	2129	7916652588013082	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2131	2333	7916652608698054	run.exe	c7a6137c83324c11
+58	2214	7916655117108986	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	60d29c66d0bf067b
+2219	2360	7916655138776322	run.exe	c7a6137c83324c11
