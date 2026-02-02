@@ -34,8 +34,22 @@ __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, in
 
     float tmp = 0.0f;
 
-    for(int i = 0 ; i < K ; ++i)
+    for(int k0 = 0 ; k0 < K ; k0 += K)
     {
+        int a_row = row;
+        int a_col = k0  + threadIdx.x;
+        int b_col = col;
+        int b_row = k0 + threadIdx.y;
 
+        At[threadIdx.y][threadIdx.x] = (a_row < M && a_col < K) ? matrix_A[row * K + a_col] : 0.0f;
+        Bt[threadIdx.y][threadIdx.x] = (b_row < K && b_col < N) ? matrix_B[b_row * N + b_col] : 0.0f;
+
+        __syncthreads();
+
+        #pragma unroll
+        for(int kk = 0 ; kk < BK ; ++kk)
+        {
+
+        }
     }
 };
