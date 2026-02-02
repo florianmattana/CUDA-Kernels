@@ -12,7 +12,7 @@ int main ()
 
     int M = 256;   // batch size (nb d'images / exemples traités ensemble)
     int K = 4096;   // nb de features en entrée (ex: MNIST 28*28 = 784)
-    int N = 10;    // nb de classes de sortie (0..9)
+    int N = 100;    // nb de classes de sortie (0..9)
 
     Matrix matrix_A;
     matrix_A.height = M;
@@ -54,18 +54,16 @@ int main ()
         
     // }
 
-    //==============================================CPU======================================================
+    //==============================================CPU=========================================================
 
     auto timing_cpu = measure_cpu_ms([&](){cpu_gemm(matrix_A.data, matrix_B.data, matrix_C.data, M, K, N);});
 
-    //==============================================GPU======================================================
+    //============================================== GPU 1 ======================================================
     float *d_matrix_A, *d_matrix_B, *d_matrix_C;
 
     CC(cudaMalloc(&d_matrix_A, bytes_A));
     CC(cudaMalloc(&d_matrix_B, bytes_B));
     CC(cudaMalloc(&d_matrix_C, bytes_C));
-
-
 
     CC(cudaMemcpy(d_matrix_A, matrix_A.data, bytes_A, cudaMemcpyHostToDevice));
     CC(cudaMemcpy(d_matrix_B, matrix_B.data, bytes_B, cudaMemcpyHostToDevice));
@@ -78,6 +76,10 @@ int main ()
                 );
 
     auto timing_kernel_1 = measure_kernel_ms([&](){naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});
+
+    //============================================== GPU 2 ======================================================
+
+
 
     std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
     std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
