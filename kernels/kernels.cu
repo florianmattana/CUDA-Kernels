@@ -1,7 +1,7 @@
 #include "kernels.h"
 #include<cuda_runtime.h>
 
-__global__ void naive_gemm(float* matrix_A, float* matrix_B, float* matrix_C, int M, int K, int N)
+__global__ void naive_gemm(const float* A, const float* B, float* C, int M, int K, int N)
 {
     int col = blockDim.x * blockIdx.x + threadIdx.x;
     int row = blockDim.y * blockIdx.y + threadIdx.y;
@@ -9,18 +9,12 @@ __global__ void naive_gemm(float* matrix_A, float* matrix_B, float* matrix_C, in
     if (row < M && col < N)
     {
         float tmp = 0.0f;
+        for (int i = 0; i < K; ++i)
+            tmp += A[row * K + i] * B[i * N + col];
 
-        for(int i = 0 ; i < K ; ++i)
-        {
-            tmp += matrix_A[row * K + i] * matrix_B[col * N + i];
-        }
-        matrix_C[row * K + col] = tmp;
+        C[row * N + col] = tmp;
     }
-};
-
-    constexpr int BM = 16;
-    constexpr int BK = 16;
-    constexpr int BN = 16;
+}
 
 __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, int M, int K, int N)
 {
@@ -34,7 +28,7 @@ __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, in
 
     float tmp = 0.0f;
 
-    for(int k0 = 0 ; k0 < K ; k0 += K)
+    for(int k0 = 0 ; k0 < K ; k0 += BK)
     {
         int a_row = row;
         int a_col = k0  + threadIdx.x;

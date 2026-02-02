@@ -79,10 +79,18 @@ int main ()
 
     //============================================== GPU 2 ======================================================
 
+    dim3 threads_2(16, 16, 1);
+    dim3 blocks_2(
+        (N + BN - 1) / BN,
+        (M + BM - 1) / BM,
+        1
+    );
 
+    auto timing_kernel_2 = measure_kernel_ms([&](){tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});       
 
     std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
     std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
+    std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
 
     CC(cudaMemcpy(matrix_C.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
 
