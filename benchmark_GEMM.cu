@@ -14,6 +14,7 @@ int main ()
     int K = 4096;   // nb de features en entrée (ex: MNIST 28*28 = 784)
     int N = 100;    // nb de classes de sortie (0..9)
 
+    //==============================================A=========================================================
     Matrix matrix_A;
     matrix_A.height = M;
     matrix_A.width = K;
@@ -23,7 +24,9 @@ int main ()
     size_t bytes_A = sizeA * sizeof(float);
 
     CC(cudaMallocHost((void**)&matrix_A.data, bytes_A));
-    
+
+    //==============================================B=========================================================
+
     Matrix matrix_B;
     matrix_B.height = K;
     matrix_B.width = N;
@@ -34,6 +37,7 @@ int main ()
     
     CC(cudaMallocHost((void**)&matrix_B.data, bytes_B));
     
+    //==============================================C=========================================================
     Matrix matrix_C;
     matrix_C.height = M;
     matrix_C.width = N;
@@ -42,18 +46,19 @@ int main ()
     size_t sizeC = matrix_C.height * matrix_C.width;
     size_t bytes_C = sizeC * sizeof(float);
     CC(cudaMallocHost((void**)&matrix_C.data, bytes_C));
-    
+
+    //==============================================C CPU REF==================================================
+    Matrix matrix_C_cpu_ref;
+    matrix_C_cpu_ref.height = M;
+    matrix_C_cpu_ref.width  = N;
+    matrix_C_cpu_ref.stride = matrix_C_cpu_ref.width;
+
+    CC(cudaMallocHost((void**)&matrix_C_cpu_ref.data, bytes_C));
+
+    //==============================================Populate A & B=============================================
     init_activation_relu(matrix_A.data, matrix_A.height, matrix_A.width, 123);
     init_weights_he_normal(matrix_B.data, matrix_B.height, matrix_B.width, 456);
     
-    // for(int i = 0 ; i < 20 ; ++i)
-    // {
-    //     std::cout << "Matrix A index: "<< i << " --> "<< matrix_A.data[i] << std::endl;
-    //     std::cout << "Matrix B index: "<< i << " --> "<< matrix_B.data[i] << std::endl;
-    //     std::cout << "" << std::endl;
-        
-    // }
-
     //==============================================CPU=========================================================
 
     auto timing_cpu = measure_cpu_ms([&](){cpu_gemm(matrix_A.data, matrix_B.data, matrix_C.data, M, K, N);});
@@ -86,7 +91,9 @@ int main ()
         1
     );
 
-    auto timing_kernel_2 = measure_kernel_ms([&](){tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);});       
+    auto timing_kernel_2 = measure_kernel_ms([&](){tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);}); 
+    
+    //============================================== Visualition ==================================================
 
     std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
     std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
@@ -94,6 +101,7 @@ int main ()
 
     CC(cudaMemcpy(matrix_C.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
 
+    //============================================== Free Memory ==================================================
     CC(cudaFreeHost(matrix_A.data));
     CC(cudaFreeHost(matrix_B.data));
     CC(cudaFreeHost(matrix_C.data));
