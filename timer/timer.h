@@ -12,7 +12,7 @@ struct GpuTiming {
 
 //==============================TIMER GPU=================================================
 template <typename F>
-GpuTiming measure_kernel_ms(F&& f, int warmup = 10, int iters = 100, cudaStream_t stream = 0)
+GpuTiming measure_kernel_ms(F&& f, int warmup = 50, int iters = 1000, cudaStream_t stream = 0)
 {
     cudaEvent_t start, stop;
     CC(cudaEventCreate(&start));
@@ -64,7 +64,7 @@ struct CpuTiming {
 };
 
 template <typename F>
-CpuTiming measure_cpu_ms(F&& f, int warmup = 10, int iters = 100)
+CpuTiming measure_cpu_ms(F&& f, int warmup = 50, int iters = 1000)
 {
     for (int i = 0; i < warmup; ++i) {
         f();

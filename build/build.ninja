@@ -84,6 +84,14 @@ build CMakeFiles\run.dir\cpu_reference\cpu_reference.cpp.obj: CXX_COMPILER__run_
   TARGET_COMPILE_PDB = CMakeFiles\run.dir\
   TARGET_PDB = run.pdb
 
+build CMakeFiles\run.dir\cpu_reference\validation.cpp.obj: CXX_COMPILER__run_unscanned_Debug C$:\Users\Florian\Desktop\kernel_experiment\cpu_reference\validation.cpp || cmake_object_order_depends_target_run
+  FLAGS = /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -MDd
+  INCLUDES = -IC:\Users\Florian\Desktop\kernel_experiment -IC:\Users\Florian\Desktop\kernel_experiment\kernels -IC:\Users\Florian\Desktop\kernel_experiment\config -IC:\Users\Florian\Desktop\kernel_experiment\cpu_reference -IC:\Users\Florian\Desktop\kernel_experiment\helpers -IC:\Users\Florian\Desktop\kernel_experiment\timer
+  OBJECT_DIR = CMakeFiles\run.dir
+  OBJECT_FILE_DIR = CMakeFiles\run.dir\cpu_reference
+  TARGET_COMPILE_PDB = CMakeFiles\run.dir\
+  TARGET_PDB = run.pdb
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target run
@@ -92,7 +100,7 @@ build CMakeFiles\run.dir\cpu_reference\cpu_reference.cpp.obj: CXX_COMPILER__run_
 #############################################
 # Link the executable run.exe
 
-build run.exe: CXX_EXECUTABLE_LINKER__run_Debug CMakeFiles\run.dir\benchmark_GEMM.cu.obj CMakeFiles\run.dir\kernels\kernels.cu.obj CMakeFiles\run.dir\config\init_data.cu.obj CMakeFiles\run.dir\cpu_reference\cpu_reference.cpp.obj
+build run.exe: CXX_EXECUTABLE_LINKER__run_Debug CMakeFiles\run.dir\benchmark_GEMM.cu.obj CMakeFiles\run.dir\kernels\kernels.cu.obj CMakeFiles\run.dir\config\init_data.cu.obj CMakeFiles\run.dir\cpu_reference\cpu_reference.cpp.obj CMakeFiles\run.dir\cpu_reference\validation.cpp.obj
   FLAGS = /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -MDd
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console
   LINK_LIBRARIES = cudadevrt.lib  cudart.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib

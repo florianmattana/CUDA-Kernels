@@ -7,6 +7,7 @@ add_executable(
     kernels/kernels.cu
     config/init_data.cu
     cpu_reference/cpu_reference.cpp
+    cpu_reference/validation.cpp
 )
 
 target_include_directories(run PRIVATE
