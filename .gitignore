@@ -1,2 +1,35 @@
 *exe
 *matrix_multiplication.cu
+
+# Build dirs
+build/
+out/
+cmake-build-*/
+CMakeFiles/
+
+# CMake cache/logs
+CMakeCache.txt
+cmake_install.cmake
+CMakeConfigureLog.yaml
+cmake.check_cache
+
+# Ninja
+build.ninja
+rules.ninja
+.ninja_deps
+.ninja_log
+
+# MSVC / VS
+.vs/
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.lib
+*.exp
+*.tlog
+*.log
+
+# Test artifacts
+Testing/

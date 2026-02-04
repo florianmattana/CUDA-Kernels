@@ -1,3 +1,4 @@
+#include "cuda_intellisense_fix.h"
 #include "kernels.h"
 #include<cuda_runtime.h>
 
@@ -28,10 +29,10 @@ __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, in
 
     float tmp = 0.0f;
 
-    for(int k0 = 0 ; k0 < K ; k0 += BK)
+    for (int k0 = 0; k0 < K; k0 += BK)
     {
         int a_row = row;
-        int a_col = k0  + threadIdx.x;
+        int a_col = k0 + threadIdx.x;
         int b_col = col;
         int b_row = k0 + threadIdx.y;
 
@@ -40,8 +41,8 @@ __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, in
 
         __syncthreads();
 
-        #pragma unroll
-        for(int kk = 0 ; kk < BK ; ++kk)
+#pragma unroll
+        for (int kk = 0; kk < BK; ++kk)
         {
             tmp += At[threadIdx.y][kk] * Bt[kk][threadIdx.x];
         }
