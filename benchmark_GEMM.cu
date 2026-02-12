@@ -92,6 +92,11 @@ int main()
                   (M + BM - 1) / BM,
                   1);
 
+    dim3 threads_3(BN, BM / TM);
+    dim3 blocks_3((N + BN - 1) / BN,
+                  (M + BM - 1) / BM,
+                   1);
+
     float tol_r = 1e-3f;
     float tol_a = 1e-3f;
 
@@ -113,6 +118,19 @@ int main()
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    CC(cudaGetLastError());
+    CC(cudaDeviceSynchronize()); // debug
+
+    CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+
+    std::cout << "[TILED] ";
+    validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
+
+    //============================== VALIDATION: PARTIAL REGISTER TILED ==============
+    std::cout << "STEP 5: validate TILED ..." << std::endl;
+
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    tiled_gemm_upgrd <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     CC(cudaGetLastError());
     CC(cudaDeviceSynchronize()); // debug
 
@@ -144,6 +162,14 @@ int main()
         tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     });
 
+    //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    std::cout << "STEP : PARTIAL REGISTER TILING benchmark ..." << std::endl;
+
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_kernel_2 = measure_kernel_ms([&]() {
+        tiled_gemm_upgrd <<<blocks_2, threads_2 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+        });
+
     //============================== Print timings ===================================
     std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
               << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
@@ -153,6 +179,9 @@ int main()
 
     std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms
               << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
+
+    std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_2.avg_ms
+        << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
 
     //============================== Free memory =====================================
     CC(cudaFree(d_matrix_A));

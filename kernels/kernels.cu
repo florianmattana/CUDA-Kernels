@@ -60,71 +60,61 @@ template<int TM>
 __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M, int K, int N)
 {
     int threadId_x = blockIdx.x * BN + threadIdx.x;
-    int threadId_y = blockIdx.y * BM + threadIdx.y * TM;
+    int threadId_y_rowBase = blockIdx.y * BM + threadIdx.y * TM;
 
     __shared__ float As[BM][BK];
     __shared__ float Bs[BK][BN];
 
     float acc[TM] = { 0.0f };
 
-    int num_threads = blockDim.x * blockDim.y;
+    int num_threads_in_block = blockDim.x * blockDim.y;
     int linear_id = threadIdx.y * blockDim.x + threadIdx.x;
 
-    for (int k0 = 0; k0 < K < ++k0)
+    for (int k0 = 0; k0 < K; k0 += BK)
     {
+        for (int i = linear_id; i < BM * BK; i += num_threads_in_block)
+        {
+            int r = i / BK;
+            int c = i % BK;
+            int gr = blockIdx.y * BM + r;
+            int gc = k0 + c;
+            As[r][c] = (gr < M && gc < K) ? A[gr * K + gc] : 0.0f;
+        }
 
+        for (int i = linear_id; i < BK * BN; i += num_threads_in_block)
+        {
+            int r = i / BN;
+            int c = i % BN;
+            int gr = k0 + r;
+            int gc = blockIdx.x * BN + c;
+            Bs[r][c] = (gr < K && gc < N) ? B[gr * N + gc] : 0.0f;
+        }
+
+        __syncthreads();
+
+#pragma unroll
+        for (int kk = 0; kk < BK; ++kk)
+        {
+            float b = Bs[kk][threadIdx.x];
+
+#pragma unroll
+            for (int m = 0; m < TM; ++m)
+            {
+                acc[m] += As[threadIdx.y * TM + m][kk] * b;
+            }
+        }
+
+        __syncthreads();
+    }
+
+    if (threadId_x < N)
+    {
+#pragma unroll
+        for (int m = 0; m < TM; ++m)
+        {
+            int r = threadId_y_rowBase + m;
+            if (r < M)
+                C[r * N + threadId_x] = acc[m];
+        }
     }
 }
-
-
-
-//   for (int k0 = 0; k0 < K; k0 += BK)
-//    {
-//
-//#pragma unroll
-//        for (int i = 0; i < TM; ++i)
-//        {
-//            int aRow = rowBase + i;          // global row
-//            int aCol = k0 + threadIdx.x;     // global col in K
-//            int aRowLocal = threadIdx.y * TM + i; // 0..BM-1
-//
-//            At[aRowLocal][threadIdx.x] = (aRow < M && aCol < K) ? A[aRow * K + aCol] : 0.0f;
-//        }
-//
-//        // --- Load B tile (simple) ---
-//        // Ici threadIdx.y doit couvrir BK (donc blockDim.y == BK)
-//        int bRow = k0 + threadIdx.y;
-//        int bCol = col;
-//
-//        Bt[threadIdx.y][threadIdx.x] =
-//            (bRow < K && bCol < N) ? B[bRow * N + bCol] : 0.0f;
-//
-//        __syncthreads();
-//
-//        // --- Compute ---
-//#pragma unroll
-//        for (int kk = 0; kk < BK; ++kk)
-//        {
-//            float b = Bt[kk][threadIdx.x]; // même colonne
-//
-//#pragma unroll
-//            for (int i = 0; i < TM; ++i)
-//            {
-//                int aRowLocal = threadIdx.y * TM + i;
-//                acc[i] += At[aRowLocal][kk] * b;
-//            }
-//        }
-//
-//        __syncthreads();
-//    }
-//
-//    // --- Store TM résultats ---
-//    if (col < N)
-//    {
-//#pragma unroll
-//        for (int i = 0; i < TM; ++i)
-//        {
-//            int r = rowBase + i;
-//            if (r < M) C[r * N + col] = acc[i];
-//        }
-//    }

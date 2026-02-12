@@ -7,8 +7,9 @@ __global__ void naive_gemm(const float* matrix_A, const float* matrix_B, float* 
 constexpr int BM = 16;
 constexpr int BK = 16;
 constexpr int BN = 16;
+constexpr int TM = 2;
 
 __global__ void tiled_gemm(float* matrix_A, float* matrix_B, float* matrix_C, int M, int K, int N);
 
 template<int TM>
-__global__ void tiled_gemm_upgrd(const float* matrix_A, const float* matrix_B, float* matrix_C, int M, int K, int N);
+__global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M, int K, int N);
