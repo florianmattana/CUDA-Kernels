@@ -118,3 +118,5 @@ __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M
         }
     }
 }
+
+template __global__ void tiled_gemm_upgrd<2>(const float*, const float*, float*, int, int, int);
