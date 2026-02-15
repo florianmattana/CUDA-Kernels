@@ -33,3 +33,4 @@ rules.ninja
 
 # Test artifacts
 Testing/
+/test.cu
