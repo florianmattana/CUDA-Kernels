@@ -14,9 +14,9 @@ int main()
 {
     std::cout << "STEP 0: start" << std::endl;
 
-    int M = 4096;
-    int K = 4096;
-    int N = 4096;
+    int M = 2048;
+    int K = 2048;
+    int N = 2048;
 
     //============================== Host pinned A ==================================
     Matrix matrix_A;
@@ -64,7 +64,6 @@ int main()
     //============================== CPU reference (compute once) ====================
     std::cout << "STEP 2: CPU ref gemm starting ..." << std::endl;
 
-    // Optionnel: init C à 0 si ton cpu_gemm suppose C initialisé
     std::fill(matrix_C_cpu.data, matrix_C_cpu.data + sizeC, 0.0f);
 
     // Calcul CPU ref (1 fois)
@@ -181,7 +180,7 @@ int main()
               << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
 
     std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_3.avg_ms
-        << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
+              << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
 
     //============================== Free memory =====================================
     CC(cudaFree(d_matrix_A));

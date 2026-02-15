@@ -70,14 +70,25 @@ __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M
     int num_threads_in_block = blockDim.x * blockDim.y;
     int linear_id = threadIdx.y * blockDim.x + threadIdx.x;
 
+    // --- Chargement collaboratif de la tuile de A en shared memory ---
+    // La tuile fait BM × BK éléments mais on a moins de threads que d'éléments.
+    // Chaque thread charge donc plusieurs éléments en itérant avec un stride
+    // égal au nombre de threads dans le bloc.
     for (int k0 = 0; k0 < K; k0 += BK)
     {
         for (int i = linear_id; i < BM * BK; i += num_threads_in_block)
         {
+            // Conversion linéaire ? 2D : on retrouve la position dans la tuile
+            // pour savoir OÙ ÉCRIRE dans As
             int r = i / BK;
             int c = i % BK;
+
+            // Conversion locale ? globale : on retrouve la position dans la matrice A
+            // pour savoir OÙ LIRE en mémoire globale
             int gr = blockIdx.y * BM + r;
             int gc = k0 + c;
+
+            // Transfert global ? shared, avec vérification des bornes
             As[r][c] = (gr < M && gc < K) ? A[gr * K + gc] : 0.0f;
         }
 
