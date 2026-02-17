@@ -7,6 +7,7 @@
 #include "cpu_reference/validation.h"
 
 #include <cuda_runtime.h>
+#include <cuda_profiler_api.h>
 #include <iostream>
 #include <algorithm>
 
@@ -14,9 +15,9 @@ int main()
 {
     std::cout << "STEP 0: start" << std::endl;
 
-    int M = 2048;
-    int K = 2048;
-    int N = 2048;
+    int M = 4096;
+    int K = 4096;
+    int N = 4096;
 
     //============================== Host pinned A ==================================
     Matrix matrix_A;
@@ -62,14 +63,14 @@ int main()
     std::cout << "STEP 1: init A/B done" << std::endl;
 
     //============================== CPU reference (compute once) ====================
-    std::cout << "STEP 2: CPU ref gemm starting ..." << std::endl;
+    std::cout << "STEP 2: CPU ref gemm ignored ..." << std::endl;
 
-    std::fill(matrix_C_cpu.data, matrix_C_cpu.data + sizeC, 0.0f);
+    // std::fill(matrix_C_cpu.data, matrix_C_cpu.data + sizeC, 0.0f);
 
-    // Calcul CPU ref (1 fois)
-    cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
+    // // Calcul CPU ref (1 fois)
+    // cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
 
-    std::cout << "STEP 3: CPU ref gemm completed" << std::endl;
+    std::cout << "STEP 3: CPU ref gemm ignored" << std::endl;
 
     //============================== Device allocations ==============================
     float *d_matrix_A = nullptr, *d_matrix_B = nullptr, *d_matrix_C = nullptr;
@@ -99,51 +100,51 @@ int main()
     float tol_r = 1e-3f;
     float tol_a = 1e-3f;
 
-    //============================== VALIDATION: NAIVE ==============================
-    std::cout << "STEP 4: validate NAIVE ..." << std::endl;
+    // //============================== VALIDATION: NAIVE ==============================
+    // std::cout << "STEP 4: validate NAIVE ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    CC(cudaGetLastError());
-    CC(cudaDeviceSynchronize()); // debug: remonte les erreurs kernel ici
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // CC(cudaGetLastError());
+    // CC(cudaDeviceSynchronize()); // debug: remonte les erreurs kernel ici
 
-    CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+    // CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
 
-    std::cout << "[NAIVE] ";
-    validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
+    // std::cout << "[NAIVE] ";
+    // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
 
-    //============================== VALIDATION: TILED ==============================
-    std::cout << "STEP 5: validate TILED ..." << std::endl;
+    // //============================== VALIDATION: TILED ==============================
+    // std::cout << "STEP 5: validate TILED ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    CC(cudaGetLastError());
-    CC(cudaDeviceSynchronize()); // debug
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // CC(cudaGetLastError());
+    // CC(cudaDeviceSynchronize()); // debug
 
-    CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+    // CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
 
-    std::cout << "[TILED] ";
-    validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
+    // std::cout << "[TILED] ";
+    // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
 
-    //============================== VALIDATION: PARTIAL REGISTER TILED ==============
-    std::cout << "STEP 6: validate TILED ..." << std::endl;
+    // //============================== VALIDATION: PARTIAL REGISTER TILED ==============
+    // std::cout << "STEP 6: validate TILED ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    CC(cudaGetLastError());
-    CC(cudaDeviceSynchronize()); // debug
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // CC(cudaGetLastError());
+    // CC(cudaDeviceSynchronize()); // debug
 
-    CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+    // CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
 
-    std::cout << "[TILED_UPGRD] ";
-    validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
+    // std::cout << "[TILED_UPGRD] ";
+    // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
 
     //============================== BENCHMARK CPU (optional) ========================
-    std::cout << "STEP 7: CPU benchmark ..." << std::endl;
+    std::cout << "STEP 7: CPU benchmark skipped" << std::endl;
 
-    auto timing_cpu = measure_cpu_ms([&](){
-        cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
-    });
+    // auto timing_cpu = measure_cpu_ms([&](){
+    //     cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
+    // });
 
     //============================== BENCHMARK GPU NAIVE =============================
     std::cout << "STEP 8: NAIVE benchmark ..." << std::endl;
@@ -169,9 +170,27 @@ int main()
         tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
         });
 
+    //============================== Profiling launch starting  ==============
+    std::cout << "STEP 11: Profiling launch starting  ..." << std::endl;
+
+    CC(cudaProfilerStart());
+
+    naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);;
+    cudaDeviceSynchronize();
+
+    tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    cudaDeviceSynchronize();
+
+    tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    cudaDeviceSynchronize();
+
+    CC(cudaProfilerStop());
+
+    std::cout << " and profiling launch completed." << std::endl;
+
     //============================== Print timings ===================================
-    std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
-              << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
+    // std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
+    //           << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
 
     std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms
               << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";

@@ -156,65 +156,65 @@ template __global__ void tiled_gemm_upgrd<2>(const float*, const float*, float*,
 
 //===
 
-template<int TM, int TN>
-__global__ void full_register_tiling(const float* A, const float* B, float C, int M, int K, int N)
-{
-    int globalId_x = blockIdx.x * BN + threadIdx.x * TN;
-    int globalId_y = blockIdx.y * BM + threadIdx.y * TM;
+// template<int TM, int TN>
+// __global__ void full_register_tiling(const float* A, const float* B, float C, int M, int K, int N)
+// {
+//     int globalId_x = blockIdx.x * BN + threadIdx.x * TN;
+//     int globalId_y = blockIdx.y * BM + threadIdx.y * TM;
 
-    __shared__ float as[BM][BK];
-    __shared__ float bs[BK][BN];
+//     __shared__ float as[BM][BK];
+//     __shared__ float bs[BK][BN];
 
-    float total [TM][TN] = {};  
+//     float total [TM][TN] = {};  
 
-    int linear_ID = blockIdx.x * threadIdx.y + threadIdx.x;
-    int nb_thread = blockIdx.x * blockIdx.y;
+//     int linear_ID = blockIdx.x * threadIdx.y + threadIdx.x;
+//     int nb_thread = blockIdx.x * blockIdx.y;
 
-#pragma unroll
-    for (int i = linear_ID; linear_ID < BM * BK ; i += linear_ID)
-    {
-        //we need local row to know where to write
-        int local_row = i / BK;
-        int local_col = i % BK;
+// #pragma unroll
+//     for (int i = linear_ID; linear_ID < BM * BK ; i += linear_ID)
+//     {
+//         //we need local row to know where to write
+//         int local_row = i / BK;
+//         int local_col = i % BK;
 
-        //we need global access to know where to read from in global A matrix
-        int global_row = blockIdx.y * BM + local_row;
-        int global_col = local_col + k0;
+//         //we need global access to know where to read from in global A matrix
+//         int global_row = blockIdx.y * BM + local_row;
+//         int global_col = local_col + k0;
 
-        as[local_row][local_col] = (global_row < M && global_col < K ) A[global_row * K + global_col] : 0.0f;
-    }
+//         as[local_row][local_col] = (global_row < M && global_col < K ) A[global_row * K + global_col] : 0.0f;
+//     }
 
-#pragma unroll
-    for(int i = linear_ID; linear_ID < BK * BN ; i+= linear_ID)
-    {
-        int local_row = i / BN;
-        int local_col = i % BN;
+// #pragma unroll
+//     for(int i = linear_ID; linear_ID < BK * BN ; i+= linear_ID)
+//     {
+//         int local_row = i / BN;
+//         int local_col = i % BN;
         
-        int global_row = blockIdx.y * BK + local_row;
-        int globL_col = local_col + k0
+//         int global_row = blockIdx.y * BK + local_row;
+//         int globL_col = local_col + k0
         
-        bs[local_row][local_col] = (global_row < K && global_col < N ) B[global_row * N + global_col] : 0.0f;
-    }
+//         bs[local_row][local_col] = (global_row < K && global_col < N ) B[global_row * N + global_col] : 0.0f;
+//     }
     
-    __syncthreads();
+//     __syncthreads();
     
-#pragma unroll
-    for(int kk = 0 ; kk < BK ; ++k)
-    {
-        
-        float a_reg[TM];
-#pragma unroll
-        for (int m = 0; m < TM; ++m)
-        {
-            a_reg[m] = as[threadIdx.y * TM + m][kk];
-        }
+// #pragma unroll
+//     for(int kk = 0 ; kk < BK ; ++k)
+//     {
 
-        float b_reg[TN];
-#pragma unroll
-        for (int m = 0; m < TM; ++m)
-        {
-            b_reg[m] = bs[threadIdx.y * TN + m][kk];
-        }
+//         float a_reg[TM];
+// #pragma unroll
+//         for (int m = 0; m < TM; ++m)
+//         {
+//             a_reg[m] = as[threadIdx.y * TM + m][kk];
+//         }
 
-    }
-}
+//         float b_reg[TN];
+// #pragma unroll
+//         for (int m = 0; m < TM; ++m)
+//         {
+//             b_reg[m] = bs[threadIdx.y * TN + m][kk];
+//         }
+
+//     }
+// }

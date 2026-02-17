@@ -7,8 +7,7 @@ add_executable(
     kernels/kernels.cu
     config/init_data.cu
     cpu_reference/cpu_reference.cpp
-    cpu_reference/validation.cpp
- "kernels/cuda_intellisense_fix.h")
+    cpu_reference/validation.cpp)
 
 find_package(CUDAToolkit REQUIRED)
 
