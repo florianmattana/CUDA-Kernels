@@ -152,7 +152,7 @@ __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M
 // Instanciation explicite du template pour TM = 2
 // Sans cette ligne, le compilateur ne sait pas quelle version
 // du kernel générer si le lancement est dans un autre fichier
-template __global__ void tiled_gemm_upgrd<2>(const float*, const float*, float*, int, int, int);
+template __global__ void tiled_gemm_upgrd<8>(const float*, const float*, float*, int, int, int);
 
 //===
 
