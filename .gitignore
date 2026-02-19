@@ -30,6 +30,7 @@ rules.ninja
 *.exp
 *.tlog
 *.log
+*.ncu-rep
 
 # Test artifacts
 Testing/
