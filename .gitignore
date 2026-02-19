@@ -38,3 +38,6 @@ Testing/
 /test2.cu
 /test3.cu
 enc_temp_folder/
+
+#other
+/vector_add_explicit.cu
