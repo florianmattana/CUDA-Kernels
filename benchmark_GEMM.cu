@@ -152,28 +152,36 @@ int main()
     // });
 
     //============================== BENCHMARK GPU NAIVE =============================
-    // std::cout << "STEP 8: NAIVE benchmark ..." << std::endl;
+    std::cout << "STEP 8: NAIVE benchmark ..." << std::endl;
 
-    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    // auto timing_kernel_1 = measure_kernel_ms([&](){
-    //     naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    // });
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_kernel_1 = measure_kernel_ms([&](){
+        naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    });
 
-    // //============================== BENCHMARK GPU TILED =============================
-    // std::cout << "STEP 9: TILED benchmark ..." << std::endl;
+    //============================== BENCHMARK GPU TILED =============================
+    std::cout << "STEP 9: TILED benchmark ..." << std::endl;
 
-    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    // auto timing_kernel_2 = measure_kernel_ms([&](){
-    //     tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    // });
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_kernel_2 = measure_kernel_ms([&](){
+        tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    });
 
-    // //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
-    // std::cout << "STEP 10: PARTIAL REGISTER TILING benchmark ..." << std::endl;
+    //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    std::cout << "STEP 10: PARTIAL REGISTER TILING benchmark ..." << std::endl;
 
-    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    // auto timing_kernel_3 = measure_kernel_ms([&]() {
-    //     tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    //     });
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_kernel_3 = measure_kernel_ms([&]() {
+        tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+        });
+
+    //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    std::cout << "STEP 11: Full TILING benchmark ..." << std::endl;
+
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_kernel_4 = measure_kernel_ms([&]() {
+        tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+        });
 
     //============================== Profiling launch starting  ==============
     std::cout << "STEP 11.0: Profiling launch reached  ..." << std::endl;
@@ -209,14 +217,17 @@ int main()
     // std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
     //           << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
 
-    // std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms
-    //           << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
+    std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms
+              << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
 
-    // std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms
-    //           << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
+    std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms
+              << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
 
-    // std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_3.avg_ms
-    //           << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
+    std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_3.avg_ms
+              << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
+
+    std::cout << "GPU CALCULATION FULL TILING avg: " << timing_kernel_4.avg_ms
+              << " ms | minimum: " << timing_kernel_4.min_ms << " ms\n";
 
     //============================== Free memory =====================================
     CC(cudaFree(d_matrix_A));
