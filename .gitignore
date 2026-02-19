@@ -35,3 +35,5 @@ rules.ninja
 Testing/
 /test.cu
 /test2.cu
+/test3.cu
+enc_temp_folder/
