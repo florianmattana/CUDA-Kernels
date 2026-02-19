@@ -43,3 +43,7 @@
 33	2937	7930351989351869	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	7534c24d7c741ff4
 2942	3287	7930352018416640	CMakeFiles/run.dir/cmake_device_link.obj	e6dd18a642c04ec0
 3288	3561	7930352021877097	run.exe	919dafc0e9303823
+6	2470	7932026413565767	CMakeFiles/run.dir/kernels/kernels.cu.obj	c8f64bd05b6930d9
+2	2711	7932026413531225	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	7534c24d7c741ff4
+2711	3039	7932026440611224	CMakeFiles/run.dir/cmake_device_link.obj	e6dd18a642c04ec0
+3039	3314	7932026443900710	run.exe	919dafc0e9303823

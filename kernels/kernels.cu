@@ -156,65 +156,80 @@ template __global__ void tiled_gemm_upgrd<8>(const float*, const float*, float*,
 
 //===
 
-// template<int TM, int TN>
-// __global__ void full_register_tiling(const float* A, const float* B, float C, int M, int K, int N)
-// {
-//     int globalId_x = blockIdx.x * BN + threadIdx.x * TN;
-//     int globalId_y = blockIdx.y * BM + threadIdx.y * TM;
+template <int TM, int TN>
+__global__ void tilingFull(const float* A, const float* B, float* C, int M, int K, int N)
+{
+    int globalId_x = blockIdx.x * BN + threadIdx.x * TN;
+    int globalId_y = blockIdx.y * BM + threadIdx.y * TM;
 
-//     __shared__ float as[BM][BK];
-//     __shared__ float bs[BK][BN];
+    __shared__ float sub_a[BM][BK];
+    __shared__ float sub_b[BK][BN];
 
-//     float total [TM][TN] = {};  
+    float acc[TM][TN] = {};
 
-//     int linear_ID = blockIdx.x * threadIdx.y + threadIdx.x;
-//     int nb_thread = blockIdx.x * blockIdx.y;
+    int threadInBlock = blockDim.x * blockDim.y;
+    int local_id = threadIdx.y * blockDim.x + threadIdx.x;
+    int size_sub_a = BM * BK;
+    int size_sub_b = BK * BN;
 
-// #pragma unroll
-//     for (int i = linear_ID; linear_ID < BM * BK ; i += linear_ID)
-//     {
-//         //we need local row to know where to write
-//         int local_row = i / BK;
-//         int local_col = i % BK;
+    for (int k = 0; k < K; k += BK)
+    {
+        // ---- Load A tile into shared memory ----
+#pragma unroll
+        for (int i = local_id; i < size_sub_a; i += threadInBlock)
+        {
+            int row_sub_a = i / BK;
+            int col_sub_a = i % BK;
+            int global_row = blockIdx.y * BM + row_sub_a;
+            int global_col = col_sub_a + k;                    
+            sub_a[row_sub_a][col_sub_a] = (global_row < M && global_col < K) ? A[global_row * K + global_col] : 0.0f;
+        }
 
-//         //we need global access to know where to read from in global A matrix
-//         int global_row = blockIdx.y * BM + local_row;
-//         int global_col = local_col + k0;
+        // ---- Load B tile into shared memory ----
+#pragma unroll
+        for (int i = local_id; i < size_sub_b; i += threadInBlock)
+        {
+            int row_sub_b = i / BN;
+            int col_sub_b = i % BN;
+            int global_row = k + row_sub_b;                    
+            int global_col = blockIdx.x * BN + col_sub_b;     
+            sub_b[row_sub_b][col_sub_b] = (global_row < K && global_col < N) ? B[global_row * N + global_col] : 0.0f;
+        }
 
-//         as[local_row][local_col] = (global_row < M && global_col < K ) A[global_row * K + global_col] : 0.0f;
-//     }
+        __syncthreads();
 
-// #pragma unroll
-//     for(int i = linear_ID; linear_ID < BK * BN ; i+= linear_ID)
-//     {
-//         int local_row = i / BN;
-//         int local_col = i % BN;
-        
-//         int global_row = blockIdx.y * BK + local_row;
-//         int globL_col = local_col + k0
-        
-//         bs[local_row][local_col] = (global_row < K && global_col < N ) B[global_row * N + global_col] : 0.0f;
-//     }
-    
-//     __syncthreads();
-    
-// #pragma unroll
-//     for(int kk = 0 ; kk < BK ; ++k)
-//     {
+        // ---- Compute — now INSIDE the k-loop ----       
+#pragma unroll
+        for (int kk = 0; kk < BK; ++kk)                     
+        {
+            float a_reg[TM];
+            #pragma unroll
+            for (int m = 0; m < TM; ++m) a_reg[m] = sub_a[threadIdx.y * TM + m][kk];  
 
-//         float a_reg[TM];
-// #pragma unroll
-//         for (int m = 0; m < TM; ++m)
-//         {
-//             a_reg[m] = as[threadIdx.y * TM + m][kk];
-//         }
+            float b_reg[TN];
+#pragma unroll
+            for (int n = 0; n < TN; ++n) b_reg[n] = sub_b[kk][threadIdx.x * TN + n];
 
-//         float b_reg[TN];
-// #pragma unroll
-//         for (int m = 0; m < TM; ++m)
-//         {
-//             b_reg[m] = bs[threadIdx.y * TN + m][kk];
-//         }
+            // ---- Outer-product accumulation ----          
+#pragma unroll
+            for (int m = 0; m < TM; ++m)
+#pragma unroll
+                for (int n = 0; n < TN; ++n)
+                    acc[m][n] += a_reg[m] * b_reg[n];
+        }
 
-//     }
-// }
+        __syncthreads();   // guard before next tile load
+    }
+    // ---- Write back to global memory ----                  
+    for (int m = 0; m < TM; ++m)
+    {
+        for (int n = 0; n < TN; ++n)
+        {
+            int gRow = globalId_y + m;
+            int gCol = globalId_x + n;
+
+            if (gRow < M && gCol < N) C[gRow * N + gCol] = acc[m][n];
+        }
+    }
+}
+template __global__ void tilingFull<8, 8>(const float*, const float*, float*, int, int, int);

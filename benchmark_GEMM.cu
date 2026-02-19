@@ -97,8 +97,13 @@ int main()
                   (M + BM - 1) / BM,
                    1);
 
-    float tol_r = 1e-3f;
-    float tol_a = 1e-3f;
+    dim3 threads_4(BN / TN, BM / TM);
+    dim3 blocks_4((N + BN - 1) / BN,
+                  (M + BM - 1) / BM,
+                   1);
+
+    //float tol_r = 1e-3f;
+    //float tol_a = 1e-3f;
 
     // //============================== VALIDATION: NAIVE ==============================
     // std::cout << "STEP 4: validate NAIVE ..." << std::endl;
@@ -171,8 +176,8 @@ int main()
     //     });
 
     //============================== Profiling launch starting  ==============
-    std::cout << "STEP 11: Profiling launch reached  ..." << std::endl;
-    std::cout << "STEP 11: Profiling launch starting  ..." << std::endl;
+    std::cout << "STEP 11.0: Profiling launch reached  ..." << std::endl;
+    std::cout << "STEP 11.1: Profiling launch starting  ..." << std::endl;
 
     CC(cudaProfilerStart());
 
@@ -186,7 +191,12 @@ int main()
 
     std::cout << "Profiling 2 completed ..." << std::endl;
 
-    tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    cudaDeviceSynchronize();
+
+    std::cout << "Profiling 3 completed ..." << std::endl;
+
+    tilingFull <TM, TN> <<<blocks_4, threads_4 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     cudaDeviceSynchronize();
 
     std::cout << "Profiling 3 completed ..." << std::endl;
