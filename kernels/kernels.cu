@@ -1,6 +1,7 @@
 ﻿#include"cuda_intellisense_fix.h"
 #include"kernels.h"
 #include<cuda_runtime.h>
+#include<cublas_v2.h>
 
 __global__ void naive_gemm(const float* A, const float* B, float* C, int M, int K, int N)
 {
@@ -180,6 +181,7 @@ __global__ void tilingFull(const float* A, const float* B, float* C, int M, int 
         {
             int row_sub_a = i / BK;
             int col_sub_a = i % BK;
+    
             int global_row = blockIdx.y * BM + row_sub_a;
             int global_col = col_sub_a + k;                    
             sub_a[row_sub_a][col_sub_a] = (global_row < M && global_col < K) ? A[global_row * K + global_col] : 0.0f;
@@ -203,7 +205,7 @@ __global__ void tilingFull(const float* A, const float* B, float* C, int M, int 
         for (int kk = 0; kk < BK; ++kk)                     
         {
             float a_reg[TM];
-            #pragma unroll
+#pragma unroll
             for (int m = 0; m < TM; ++m) a_reg[m] = sub_a[threadIdx.y * TM + m][kk];  
 
             float b_reg[TN];
@@ -211,9 +213,9 @@ __global__ void tilingFull(const float* A, const float* B, float* C, int M, int 
             for (int n = 0; n < TN; ++n) b_reg[n] = sub_b[kk][threadIdx.x * TN + n];
 
             // ---- Outer-product accumulation ----          
-#pragma unroll
+            #pragma unroll
             for (int m = 0; m < TM; ++m)
-#pragma unroll
+                #pragma unroll
                 for (int n = 0; n < TN; ++n)
                     acc[m][n] += a_reg[m] * b_reg[n];
         }
