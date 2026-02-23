@@ -1,7 +1,6 @@
 ﻿#include"cuda_intellisense_fix.h"
 #include"kernels.h"
 #include<cuda_runtime.h>
-#include<cublas_v2.h>
 
 __global__ void naive_gemm(const float* A, const float* B, float* C, int M, int K, int N)
 {

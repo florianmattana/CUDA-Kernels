@@ -7,6 +7,7 @@
 #include "cpu_reference/validation.h"
 
 #include <cuda_runtime.h>
+#include<cublas_v2.h>
 #include <cuda_profiler_api.h>
 #include <iostream>
 #include <algorithm>
@@ -183,9 +184,22 @@ int main()
         tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
         });
 
+    //============================== BENCHMARK cuBLAS  =======================
+    std::cout << "STEP 12: cuBLAS benchmark ..." << std::endl;
+
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+
+    float alpha = 1.0f;
+    float beta = 0.0f;
+
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    auto timing_cublas = measure_kernel_ms([&]() {
+        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);
+        });
     //============================== Profiling launch starting  ==============
-    std::cout << "STEP 11.0: Profiling launch reached  ..." << std::endl;
-    std::cout << "STEP 11.1: Profiling launch starting  ..." << std::endl;
+    std::cout << "STEP 13.0: Profiling launch reached  ..." << std::endl;
+    std::cout << "STEP 13.1: Profiling launch starting  ..." << std::endl;
 
     CC(cudaProfilerStart());
 
@@ -207,7 +221,12 @@ int main()
     tilingFull <TM, TN> <<<blocks_4, threads_4 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     cudaDeviceSynchronize();
 
-    std::cout << "Profiling 3 completed ..." << std::endl;
+    std::cout << "Profiling 4 completed ..." << std::endl;
+
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);
+    cudaDeviceSynchronize();
+
+    std::cout << "Profiling 5 completed ..." << std::endl;
 
     CC(cudaProfilerStop());
 
@@ -229,7 +248,13 @@ int main()
     std::cout << "GPU CALCULATION FULL TILING avg: " << timing_kernel_4.avg_ms
               << " ms | minimum: " << timing_kernel_4.min_ms << " ms\n";
 
+    std::cout << "GPU CALCULATION cuBLAS avg: " << timing_cublas.avg_ms
+              << " ms | minimum: " << timing_cublas.min_ms << " ms\n";
+
+
     //============================== Free memory =====================================
+    cublasDestroy(handle);
+
     CC(cudaFree(d_matrix_A));
     CC(cudaFree(d_matrix_B));
     CC(cudaFree(d_matrix_C));
