@@ -14,6 +14,8 @@
 
 int main()
 {
+
+    std::cout << "Version 2.0" << std::endl;
     std::cout << "STEP 0: start" << std::endl;
 
     int M = 4096;
@@ -64,14 +66,14 @@ int main()
     std::cout << "STEP 1: init A/B done" << std::endl;
 
     //============================== CPU reference (compute once) ====================
-    std::cout << "STEP 2: CPU ref gemm ignored ..." << std::endl;
+    // std::cout << "STEP 2: CPU ref gemm started ..." << std::endl;
 
     // std::fill(matrix_C_cpu.data, matrix_C_cpu.data + sizeC, 0.0f);
 
     // // Calcul CPU ref (1 fois)
     // cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
 
-    std::cout << "STEP 3: CPU ref gemm ignored" << std::endl;
+    // std::cout << "STEP 3: CPU ref gemm completed " << std::endl;
 
     //============================== Device allocations ==============================
     float *d_matrix_A = nullptr, *d_matrix_B = nullptr, *d_matrix_C = nullptr;
@@ -88,10 +90,9 @@ int main()
                 (M + threads.y - 1) / threads.y,
                 1);
 
-    dim3 threads_2(16, 16, 1);
-    dim3 blocks_2((N + BN - 1) / BN,
-                  (M + BM - 1) / BM,
-                  1);
+    dim3 threads_2(TILE_SIZE, TILE_SIZE);
+    dim3 blocks_2((N + TILE_SIZE - 1) / TILE_SIZE,
+                (M + TILE_SIZE - 1) / TILE_SIZE);
 
     dim3 threads_3(BN, BM / TM);
     dim3 blocks_3((N + BN - 1) / BN,
@@ -103,8 +104,8 @@ int main()
                   (M + BM - 1) / BM,
                    1);
 
-    //float tol_r = 1e-3f;
-    //float tol_a = 1e-3f;
+    float tol_r = 1e-3f;
+    float tol_a = 1e-3f;
 
     // //============================== VALIDATION: NAIVE ==============================
     // std::cout << "STEP 4: validate NAIVE ..." << std::endl;
@@ -133,7 +134,7 @@ int main()
     // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
 
     // //============================== VALIDATION: PARTIAL REGISTER TILED ==============
-    // std::cout << "STEP 6: validate TILED ..." << std::endl;
+    // std::cout << "STEP 6: validate TILED upgraded  ..." << std::endl;
 
     // CC(cudaMemset(d_matrix_C, 0, bytes_C));
     // tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
@@ -145,15 +146,29 @@ int main()
     // std::cout << "[TILED_UPGRD] ";
     // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
 
+    //  //============================== VALIDATION: PARTIAL REGISTER TILED ==============
+    // std::cout << "STEP 7 : validate Full TILED  ..." << std::endl;
+
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // CC(cudaGetLastError());
+    // CC(cudaDeviceSynchronize()); // debug
+
+    // CC(cudaMemcpy(matrix_C_gpu.data, d_matrix_C, bytes_C, cudaMemcpyDeviceToHost));
+
+    // std::cout << "[FULL TILED] ";
+    // validation(matrix_C_cpu.data, matrix_C_gpu.data, M, N, tol_r, tol_a);
+    
+
     //============================== BENCHMARK CPU (optional) ========================
-    //std::cout << "STEP 7: CPU benchmark skipped" << std::endl;
+    // std::cout << "STEP 8: CPU benchmark ..." << std::endl;
 
     // auto timing_cpu = measure_cpu_ms([&](){
     //     cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
     // });
 
     //============================== BENCHMARK GPU NAIVE =============================
-    std::cout << "STEP 8: NAIVE benchmark ..." << std::endl;
+    std::cout << "STEP 9: NAIVE benchmark ..." << std::endl;
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     auto timing_kernel_1 = measure_kernel_ms([&](){
@@ -161,7 +176,7 @@ int main()
     });
 
     //============================== BENCHMARK GPU TILED =============================
-    std::cout << "STEP 9: TILED benchmark ..." << std::endl;
+    std::cout << "STEP 10: TILED benchmark ..." << std::endl;
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     auto timing_kernel_2 = measure_kernel_ms([&](){
@@ -169,7 +184,7 @@ int main()
     });
 
     //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
-    std::cout << "STEP 10: PARTIAL REGISTER TILING benchmark ..." << std::endl;
+    std::cout << "STEP 11: PARTIAL REGISTER TILING benchmark ..." << std::endl;
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     auto timing_kernel_3 = measure_kernel_ms([&]() {
@@ -177,7 +192,7 @@ int main()
         });
 
     //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
-    std::cout << "STEP 11: Full TILING benchmark ..." << std::endl;
+    std::cout << "STEP 12: Full TILING benchmark ..." << std::endl;
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     auto timing_kernel_4 = measure_kernel_ms([&]() {
@@ -185,7 +200,7 @@ int main()
         });
 
     //============================== BENCHMARK cuBLAS  =======================
-    std::cout << "STEP 12: cuBLAS benchmark ..." << std::endl;
+    std::cout << "STEP 13: cuBLAS benchmark ..." << std::endl;
 
     cublasHandle_t handle;
     cublasCreate(&handle);
@@ -195,11 +210,11 @@ int main()
 
     CC(cudaMemset(d_matrix_C, 0, bytes_C));
     auto timing_cublas = measure_kernel_ms([&]() {
-        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);
-        });
+        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);});
+        
     //============================== Profiling launch starting  ==============
-    std::cout << "STEP 13.0: Profiling launch reached  ..." << std::endl;
-    std::cout << "STEP 13.1: Profiling launch starting  ..." << std::endl;
+    std::cout << "STEP 14.0: Profiling launch reached  ..." << std::endl;
+    std::cout << "STEP 14.1: Profiling launch starting  ..." << std::endl;
 
     CC(cudaProfilerStart());
 

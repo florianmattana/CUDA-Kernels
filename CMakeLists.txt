@@ -27,3 +27,5 @@ target_include_directories(run PRIVATE
   helpers
   timer
 )
+
+target_link_libraries(run PRIVATE CUDA::cublas)

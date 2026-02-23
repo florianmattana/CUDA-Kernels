@@ -19,42 +19,39 @@ __global__ void naive_gemm(const float* A, const float* B, float* C, int M, int 
     }
 };
 
-__global__ void tiled_gemm(float* A, float* B, float* C, int M, int K, int N)
+__global__ void tiled_gemm(const float* A, const float* B, float* C, int M, int K, int N)
 {
-    int threadId_x = blockIdx.x * BN + threadIdx.x;
-    int threadId_y = blockIdx.y * BM + threadIdx.y;
+    int col = blockIdx.x * TILE_SIZE + threadIdx.x;
+    int row = blockIdx.y * TILE_SIZE + threadIdx.y;
 
-    __shared__ float As[BM][BK];
-    __shared__ float Bs[BK][BN];
+    __shared__ float As[TILE_SIZE][TILE_SIZE];
+    __shared__ float Bs[TILE_SIZE][TILE_SIZE];
 
     float total = 0.0f;
 
-    for (int k0 = 0; k0 < K; k0 += BK)
+    for (int k0 = 0; k0 < K; k0 += TILE_SIZE)
     {
-
-        int a_row = threadId_y;
         int a_col = k0 + threadIdx.x;
-
-        int b_col = threadId_x;
         int b_row = k0 + threadIdx.y;
 
-        As[threadIdx.y][threadIdx.x] = (a_row < M && a_col < K) ? A[a_row * K + a_col] : 0.0f;
-        Bs[threadIdx.y][threadIdx.x] = (b_row < K && b_col < N) ? B[b_row * N + b_col] : 0.0f;
+        As[threadIdx.y][threadIdx.x] = (row < M && a_col < K) ? A[row * K + a_col] : 0.0f;
+        Bs[threadIdx.y][threadIdx.x] = (b_row < K && col < N) ? B[b_row * N + col] : 0.0f;
 
         __syncthreads();
 
 #pragma unroll
-        for (int kk = 0; kk < BK; ++kk)
+        for (int kk = 0; kk < TILE_SIZE; ++kk)
         {
             total += As[threadIdx.y][kk] * Bs[kk][threadIdx.x];
         }
         __syncthreads();
     }
-    if (threadId_y < M && threadId_x < N)
+
+    if (row < M && col < N)
     {
-        C[threadId_y * N + threadId_x] = total;
+        C[row * N + col] = total;
     }
-};
+}
 
 template<int TM>
 __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M, int K, int N)
