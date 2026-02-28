@@ -167,50 +167,50 @@ int main()
     //     cpu_gemm(matrix_A.data, matrix_B.data, matrix_C_cpu.data, M, K, N);
     // });
 
-    //============================== BENCHMARK GPU NAIVE =============================
-    std::cout << "STEP 9: NAIVE benchmark ..." << std::endl;
+    // //============================== BENCHMARK GPU NAIVE =============================
+    // std::cout << "STEP 9: NAIVE benchmark ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    auto timing_kernel_1 = measure_kernel_ms([&](){
-        naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    });
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_kernel_1 = measure_kernel_ms([&](){
+    //     naive_gemm<<<blocks, threads>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // });
 
-    //============================== BENCHMARK GPU TILED =============================
-    std::cout << "STEP 10: TILED benchmark ..." << std::endl;
+    // //============================== BENCHMARK GPU TILED =============================
+    // std::cout << "STEP 10: TILED benchmark ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    auto timing_kernel_2 = measure_kernel_ms([&](){
-        tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    });
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_kernel_2 = measure_kernel_ms([&](){
+    //     tiled_gemm<<<blocks_2, threads_2>>>(d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    // });
 
-    //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
-    std::cout << "STEP 11: PARTIAL REGISTER TILING benchmark ..." << std::endl;
+    // //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    // std::cout << "STEP 11: PARTIAL REGISTER TILING benchmark ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    auto timing_kernel_3 = measure_kernel_ms([&]() {
-        tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-        });
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_kernel_3 = measure_kernel_ms([&]() {
+    //     tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    //     });
 
-    //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
-    std::cout << "STEP 12: Full TILING benchmark ..." << std::endl;
+    // //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    // std::cout << "STEP 12: Full TILING benchmark ..." << std::endl;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    auto timing_kernel_4 = measure_kernel_ms([&]() {
-        tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-        });
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_kernel_4 = measure_kernel_ms([&]() {
+    //     tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    //     });
 
-    //============================== BENCHMARK cuBLAS  =======================
-    std::cout << "STEP 13: cuBLAS benchmark ..." << std::endl;
+    // //============================== BENCHMARK cuBLAS  =======================
+    // std::cout << "STEP 13: cuBLAS benchmark ..." << std::endl;
 
-    cublasHandle_t handle;
-    cublasCreate(&handle);
+     cublasHandle_t handle;
+     cublasCreate(&handle);
 
-    float alpha = 1.0f;
-    float beta = 0.0f;
+     float alpha = 1.0f;
+     float beta = 0.0f;
 
-    CC(cudaMemset(d_matrix_C, 0, bytes_C));
-    auto timing_cublas = measure_kernel_ms([&]() {
-        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);});
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_cublas = measure_kernel_ms([&]() {
+    //     cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);});
         
     //============================== Profiling launch starting  ==============
     std::cout << "STEP 14.0: Profiling launch reached  ..." << std::endl;
@@ -233,6 +233,8 @@ int main()
 
     std::cout << "Profiling 3 completed ..." << std::endl;
 
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
+
     tilingFull <TM, TN> <<<blocks_4, threads_4 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     cudaDeviceSynchronize();
 
@@ -246,29 +248,28 @@ int main()
     CC(cudaProfilerStop());
 
     std::cout << " and profiling launch completed." << std::endl;
-
     //============================== Print timings ===================================
     // std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
     //           << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
 
-    std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms
-              << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
+    // std::cout << "GPU CALCULATION NAIVE avg: " << timing_kernel_1.avg_ms
+    //           << " ms | minimum: " << timing_kernel_1.min_ms << " ms\n";
 
-    std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms
-              << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
+    // std::cout << "GPU CALCULATION TILED GEMM avg: " << timing_kernel_2.avg_ms
+    //           << " ms | minimum: " << timing_kernel_2.min_ms << " ms\n";
 
-    std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_3.avg_ms
-              << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
+    // std::cout << "GPU CALCULATION PARTIAL REGISTER TILING avg: " << timing_kernel_3.avg_ms
+    //           << " ms | minimum: " << timing_kernel_3.min_ms << " ms\n";
 
-    std::cout << "GPU CALCULATION FULL TILING avg: " << timing_kernel_4.avg_ms
-              << " ms | minimum: " << timing_kernel_4.min_ms << " ms\n";
+    // std::cout << "GPU CALCULATION FULL TILING avg: " << timing_kernel_4.avg_ms
+    //           << " ms | minimum: " << timing_kernel_4.min_ms << " ms\n";
 
-    std::cout << "GPU CALCULATION cuBLAS avg: " << timing_cublas.avg_ms
-              << " ms | minimum: " << timing_cublas.min_ms << " ms\n";
+    // std::cout << "GPU CALCULATION cuBLAS avg: " << timing_cublas.avg_ms
+    //           << " ms | minimum: " << timing_cublas.min_ms << " ms\n";
 
 
     //============================== Free memory =====================================
-    cublasDestroy(handle);
+    // cublasDestroy(handle);
 
     CC(cudaFree(d_matrix_A));
     CC(cudaFree(d_matrix_B));

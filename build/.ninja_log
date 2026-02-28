@@ -1,11 +1,11 @@
 # ninja log v6
-15	85	7935565547375119	CMakeFiles/run.dir/cpu_reference/cpu_reference.cpp.obj	7eb7f1727ac14cbc
-20	425	7935565547415778	CMakeFiles/run.dir/cpu_reference/validation.cpp.obj	bc5384c43c907a03
-6	1542	7935565547282271	CMakeFiles/run.dir/kernels/kernels.cu.obj	4829be0b8d3b6c1c
-10	2216	7935565547316679	CMakeFiles/run.dir/config/init_data.cu.obj	f08784df700405b8
-2	2680	7935565547243076	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	c148f1ca3b5cdca8
-2681	3000	7935565574019821	CMakeFiles/run.dir/cmake_device_link.obj	bf1a795b2e544ff5
-3001	3258	7935565577217362	run.exe	3472c5a1dde2a050
-54	2730	7935639246833479	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	c148f1ca3b5cdca8
-2731	2976	7935639273605788	CMakeFiles/run.dir/cmake_device_link.obj	bf1a795b2e544ff5
-2976	3080	7935639275977166	run.exe	3472c5a1dde2a050
+45	112	7939974913007195	CMakeFiles/run.dir/cpu_reference/cpu_reference.cpp.obj	7eb7f1727ac14cbc
+41	2313	7939974913000036	CMakeFiles/run.dir/config/init_data.cu.obj	ad2c55acfeb07976
+49	471	7939974913050849	CMakeFiles/run.dir/cpu_reference/validation.cpp.obj	bc5384c43c907a03
+37	1887	7939974912928049	CMakeFiles/run.dir/kernels/kernels.cu.obj	d7d2c660ca7f3cfe
+3	2587	7938848351344838	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	c148f1ca3b5cdca8
+2966	3152	7938848380983074	run.exe	3472c5a1dde2a050
+2588	2966	7938848377210012	CMakeFiles/run.dir/cmake_device_link.obj	bf1a795b2e544ff5
+26	2187	7939975812666320	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	f94670fe6d25a776
+2190	2587	7939975834218036	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
+2588	2681	7939975838183435	run.exe	3472c5a1dde2a050
