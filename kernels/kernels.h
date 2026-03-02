@@ -18,3 +18,6 @@ __global__ void tiled_gemm_upgrd(const float* A, const float* B, float* C, int M
 
 template<int TM, int TN>
 __global__ void tilingFull(const float* A, const float* B, float* C, int M, int K, int N);
+
+template<int TM, int TN>
+__global__ void vecto_and_padded(const float* A, const float* B, float* C, int M, int K, int N);

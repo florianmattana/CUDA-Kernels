@@ -15,7 +15,7 @@
 int main()
 {
 
-    std::cout << "Version 2.0" << std::endl;
+    std::cout << "Version 3.0 : padded " << std::endl;
     std::cout << "STEP 0: start" << std::endl;
 
     int M = 4096;
@@ -101,6 +101,11 @@ int main()
 
     dim3 threads_4(BN / TN, BM / TM);
     dim3 blocks_4((N + BN - 1) / BN,
+                  (M + BM - 1) / BM,
+                   1);
+
+    dim3 threads_6(BN / TN, BM / TM);
+    dim3 blocks_6((N + BN - 1) / BN,
                   (M + BM - 1) / BM,
                    1);
 
@@ -191,7 +196,7 @@ int main()
     //     tiled_gemm_upgrd <TM> <<<blocks_3, threads_3 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     //     });
 
-    // //============================== BENCHMARK PARTIAL REGISTER TILING  ==============
+    // //============================== BENCHMARK FULL REGISTER TILING  ==============
     // std::cout << "STEP 12: Full TILING benchmark ..." << std::endl;
 
     // CC(cudaMemset(d_matrix_C, 0, bytes_C));
@@ -199,8 +204,16 @@ int main()
     //     tilingFull <TM,TN> <<<blocks_4, threads_4 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
     //     });
 
+    // //============================== BENCHMARK VECTO AND PADDED  ==============
+    // std::cout << "STEP 13: Vecto and Padded benchmark ..." << std::endl;
+
+    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    // auto timing_kernel_6 = measure_kernel_ms([&]() {
+    //     vecto_and_padded <TM,TN> <<<blocks_6, threads_6 >> > (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    //     });
+
     // //============================== BENCHMARK cuBLAS  =======================
-    // std::cout << "STEP 13: cuBLAS benchmark ..." << std::endl;
+    // std::cout << "STEP 14: cuBLAS benchmark ..." << std::endl;
 
      cublasHandle_t handle;
      cublasCreate(&handle);
@@ -213,8 +226,8 @@ int main()
     //     cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);});
         
     //============================== Profiling launch starting  ==============
-    std::cout << "STEP 14.0: Profiling launch reached  ..." << std::endl;
-    std::cout << "STEP 14.1: Profiling launch starting  ..." << std::endl;
+    std::cout << "STEP 15.0: Profiling launch reached  ..." << std::endl;
+    std::cout << "STEP 15.1: Profiling launch starting  ..." << std::endl;
 
     CC(cudaProfilerStart());
 
@@ -245,9 +258,15 @@ int main()
 
     std::cout << "Profiling 5 completed ..." << std::endl;
 
+    vecto_and_padded <TM, TN> <<<blocks_6, threads_6 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    cudaDeviceSynchronize();
+
+    std::cout << "Profiling 6 completed ..." << std::endl;
+
     CC(cudaProfilerStop());
 
-    std::cout << " and profiling launch completed." << std::endl;
+    std::cout << " ... and profiling done." << std::endl;
+
     //============================== Print timings ===================================
     // std::cout << "CPU CALCULATION avg: " << timing_cpu.avg_ms
     //           << " ms | minimum: " << timing_cpu.min_ms << " ms\n";
@@ -266,6 +285,9 @@ int main()
 
     // std::cout << "GPU CALCULATION cuBLAS avg: " << timing_cublas.avg_ms
     //           << " ms | minimum: " << timing_cublas.min_ms << " ms\n";
+
+     // std::cout << "GPU CALCULATION Vecto_and_padded avg: " << timing_kernel_6.avg_ms
+    //           << " ms | minimum: " << timing_kernel_6.min_ms << " ms\n";
 
 
     //============================== Free memory =====================================

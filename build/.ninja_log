@@ -9,3 +9,15 @@
 26	2187	7939975812666320	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	f94670fe6d25a776
 2190	2587	7939975834218036	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
 2588	2681	7939975838183435	run.exe	3472c5a1dde2a050
+94	1735	7940733224425528	CMakeFiles/run.dir/kernels/kernels.cu.obj	d7d2c660ca7f3cfe
+1736	2252	7940733240868308	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
+2252	2592	7940733246009388	run.exe	3472c5a1dde2a050
+43	2400	7940733682132013	CMakeFiles/run.dir/benchmark_GEMM.cu.obj	f94670fe6d25a776
+2402	2745	7940733705695867	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
+2746	2913	7940733709161671	run.exe	3472c5a1dde2a050
+41	1683	7940819102647709	CMakeFiles/run.dir/kernels/kernels.cu.obj	d7d2c660ca7f3cfe
+1684	2001	7940819119152016	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
+2001	2104	7940819122314545	run.exe	3472c5a1dde2a050
+43	1457	7940824956049540	CMakeFiles/run.dir/kernels/kernels.cu.obj	d7d2c660ca7f3cfe
+1459	1777	7940824970181427	CMakeFiles/run.dir/cmake_device_link.obj	be35ed9f100db8fb
+1777	1913	7940824973348071	run.exe	3472c5a1dde2a050
