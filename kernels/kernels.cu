@@ -238,59 +238,72 @@ template __global__ void tilingFull<8, 8>(const float*, const float*, float*, in
 template <int TM, int TN>
 __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M, int K, int N)
 {
-    int globalId_x = blockIdx.x * BN + threadIdx.x * TN;
-    int globalId_y = blockIdx.y * BM + threadIdx.y * TM;
+    int global_y = blockIdx.y * BM + threadIdx.y * TM;
+    int global_x = blockIdx.x * BN + threadIdx.x * TN;
 
-    __shared__ float sub_a[BM][BK + 3];
-    __shared__ float sub_b[BK][BN + 3];
+    __shared__ float a[BK][BM];    // transposé
+    __shared__ float b[BK][BN];
+
+    int linear_id = threadIdx.y * blockDim.x + threadIdx.x;
+    int total = blockDim.x * blockDim.y;
 
     float acc[TM][TN] = {};
 
-    int threadInBlock = blockDim.x * blockDim.y;
-    int local_id = threadIdx.y * blockDim.x + threadIdx.x;
-    int size_sub_a = BM * BK;
-    int size_sub_b = BK * BN;
-
-    for (int k = 0; k < K; k += BK)
+    for (int bk = 0; bk < K; bk += BK)
     {
-        // ---- Load A tile into shared memory ----
-#pragma unroll
-        for (int i = local_id; i < size_sub_a; i += threadInBlock)
+        // ---- Load A (vectorisé + transposé) ----
+        #pragma unroll
+        for (int t = linear_id; t < (BM * BK) / 4; t += total)
         {
-            int row_sub_a = i / BK;
-            int col_sub_a = i % BK;
-    
-            int global_row = blockIdx.y * BM + row_sub_a;
-            int global_col = col_sub_a + k;                    
-            sub_a[row_sub_a][col_sub_a] = (global_row < M && global_col < K) ? A[global_row * K + global_col] : 0.0f;
+            int flat = t * 4;
+            int row = flat / BK;
+            int col = flat % BK;
+            int global_row = blockIdx.y * BM + row;
+            int global_col = bk + col;
+
+            float4 tmp = (global_row < M && global_col + 3 < K)
+                ? *reinterpret_cast<const float4*>(&A[global_row * K + global_col])
+                : make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+            a[col + 0][row] = tmp.x;
+            a[col + 1][row] = tmp.y;
+            a[col + 2][row] = tmp.z;
+            a[col + 3][row] = tmp.w;
         }
 
-        // ---- Load B tile into shared memory ----
-#pragma unroll
-        for (int i = local_id; i < size_sub_b; i += threadInBlock)
+        // ---- Load B (vectorisé) ----
+        #pragma unroll
+        for (int t = linear_id; t < (BK * BN) / 4; t += total)
         {
-            int row_sub_b = i / BN;
-            int col_sub_b = i % BN;
-            int global_row = k + row_sub_b;                    
-            int global_col = blockIdx.x * BN + col_sub_b;     
-            sub_b[row_sub_b][col_sub_b] = (global_row < K && global_col < N) ? B[global_row * N + global_col] : 0.0f;
+            int flat = t * 4;
+            int row = flat / BN;
+            int col = flat % BN;
+            int global_row = bk + row;
+            int global_col = blockIdx.x * BN + col;
+
+            float4 tmp = (global_row < K && global_col + 3 < N)
+                ? *reinterpret_cast<const float4*>(&B[global_row * N + global_col])
+                : make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+            *reinterpret_cast<float4*>(&b[row][col]) = tmp;
         }
 
         __syncthreads();
 
-        // ---- Compute — now INSIDE the k-loop ----       
-#pragma unroll
-        for (int kk = 0; kk < BK; ++kk)                     
+        // ---- Compute ----
+        #pragma unroll
+        for (int kk = 0; kk < BK; ++kk)
         {
             float a_reg[TM];
-#pragma unroll
-            for (int m = 0; m < TM; ++m) a_reg[m] = sub_a[threadIdx.y * TM + m][kk];  
+            #pragma unroll
+            for (int m = 0; m < TM; ++m)
+                a_reg[m] = a[kk][threadIdx.y * TM + m];
 
             float b_reg[TN];
-#pragma unroll
-            for (int n = 0; n < TN; ++n) b_reg[n] = sub_b[kk][threadIdx.x * TN + n];
+            #pragma unroll
+            for (int n = 0; n < TN; ++n)
+                b_reg[n] = b[kk][threadIdx.x * TN + n];
 
-            // ---- Outer-product accumulation ----          
             #pragma unroll
             for (int m = 0; m < TM; ++m)
                 #pragma unroll
@@ -298,17 +311,21 @@ __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M
                     acc[m][n] += a_reg[m] * b_reg[n];
         }
 
-        __syncthreads();   // guard before next tile load
+        __syncthreads();
     }
-    // ---- Write back to global memory ----                  
+
+    // ---- Write back (vectorisé) ----
     for (int m = 0; m < TM; ++m)
     {
-        for (int n = 0; n < TN; ++n)
-        {
-            int gRow = globalId_y + m;
-            int gCol = globalId_x + n;
+        int gr = global_y + m;
+        int gc = global_x;
 
-            if (gRow < M && gCol < N) C[gRow * N + gCol] = acc[m][n];
+        if (gr < M && gc + 7 < N)
+        {
+            *reinterpret_cast<float4*>(&C[gr * N + gc]) =
+                make_float4(acc[m][0], acc[m][1], acc[m][2], acc[m][3]);
+            *reinterpret_cast<float4*>(&C[gr * N + gc + 4]) =
+                make_float4(acc[m][4], acc[m][5], acc[m][6], acc[m][7]);
         }
     }
 }
