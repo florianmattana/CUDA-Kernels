@@ -292,24 +292,21 @@ __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M
 
         // ---- Compute ----
         #pragma unroll
-        for (int kk = 0; kk < BK; ++kk)
-        {
-            float a_reg[TM];
-            #pragma unroll
-            for (int m = 0; m < TM; ++m)
-                a_reg[m] = a[kk][threadIdx.y * TM + m];
+    for (int kk = 0; kk < BK; ++kk)
+    {
+        float a_reg[TM], b_reg[TN];
 
-            float b_reg[TN];
+        *reinterpret_cast<float4*>(&a_reg[0]) = *reinterpret_cast<float4*>(&a[kk][threadIdx.y * TM]);
+        *reinterpret_cast<float4*>(&a_reg[4]) = *reinterpret_cast<float4*>(&a[kk][threadIdx.y * TM + 4]);
+        *reinterpret_cast<float4*>(&b_reg[0]) = *reinterpret_cast<float4*>(&b[kk][threadIdx.x * TN]);
+        *reinterpret_cast<float4*>(&b_reg[4]) = *reinterpret_cast<float4*>(&b[kk][threadIdx.x * TN + 4]);
+
+        #pragma unroll
+        for (int m = 0; m < TM; ++m)
             #pragma unroll
             for (int n = 0; n < TN; ++n)
-                b_reg[n] = b[kk][threadIdx.x * TN + n];
-
-            #pragma unroll
-            for (int m = 0; m < TM; ++m)
-                #pragma unroll
-                for (int n = 0; n < TN; ++n)
-                    acc[m][n] += a_reg[m] * b_reg[n];
-        }
+                acc[m][n] += a_reg[m] * b_reg[n];
+    }
 
         __syncthreads();
     }

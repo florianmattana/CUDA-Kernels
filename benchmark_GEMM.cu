@@ -100,10 +100,10 @@ int main()
     //               (M + BM - 1) / BM,
     //                1);
 
-    // dim3 threads_4(BN / TN, BM / TM);
-    // dim3 blocks_4((N + BN - 1) / BN,
-    //               (M + BM - 1) / BM,
-    //                1);
+    dim3 threads_4(BN / TN, BM / TM);
+    dim3 blocks_4((N + BN - 1) / BN,
+                  (M + BM - 1) / BM,
+                   1);
 
     dim3 threads_6(BN / TN, BM / TM);
     dim3 blocks_6((N + BN - 1) / BN,
@@ -261,12 +261,12 @@ int main()
 
     // std::cout << "Profiling 3 completed ..." << std::endl;
 
-    // CC(cudaMemset(d_matrix_C, 0, bytes_C));
+    CC(cudaMemset(d_matrix_C, 0, bytes_C));
 
-    // tilingFull <TM, TN> <<<blocks_4, threads_4 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
-    // cudaDeviceSynchronize();
+    tilingFull <TM, TN> <<<blocks_4, threads_4 >>> (d_matrix_A, d_matrix_B, d_matrix_C, M, K, N);
+    cudaDeviceSynchronize();
 
-    // std::cout << "Profiling 4 completed ..." << std::endl;
+    std::cout << "Profiling 4 completed ..." << std::endl;
 
     cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, d_matrix_B, N, d_matrix_A, K, &beta, d_matrix_C, N);
     cudaDeviceSynchronize();
