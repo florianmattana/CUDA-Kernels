@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #pragma once
 
 void init_activation_relu(float* matrix, int M, int K, uint32_t seed);
