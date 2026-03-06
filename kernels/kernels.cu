@@ -241,8 +241,8 @@ __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M
     int global_y = blockIdx.y * BM + threadIdx.y * TM;
     int global_x = blockIdx.x * BN + threadIdx.x * TN;
 
-    __shared__ float a[BK][BM];    // transposé
-    __shared__ float b[BK][BN];
+    __shared__ float a[BK][BM+4];    // transposé
+    __shared__ float b[BK][BN+4];
 
     int linear_id = threadIdx.y * blockDim.x + threadIdx.x;
     int total = blockDim.x * blockDim.y;
@@ -252,7 +252,7 @@ __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M
     for (int bk = 0; bk < K; bk += BK)
     {
         // ---- Load A (vectorisé + transposé) ----
-        #pragma unroll
+         #pragma unroll
         for (int t = linear_id; t < (BM * BK) / 4; t += total)
         {
             int flat = t * 4;
@@ -261,9 +261,16 @@ __global__ void vecto_and_padded(const float* A, const float* B, float* C, int M
             int global_row = blockIdx.y * BM + row;
             int global_col = bk + col;
 
-            float4 tmp = (global_row < M && global_col + 3 < K)
-                ? *reinterpret_cast<const float4*>(&A[global_row * K + global_col])
-                : make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+            float4 tmp;
+            if (global_row < M && global_col + 3 < K)
+                tmp = *reinterpret_cast<const float4*>(&A[global_row * K + global_col]);
+            else
+            {
+                tmp.x = (global_row < M && global_col + 0 < K) ? A[global_row * K + global_col + 0] : 0.0f;
+                tmp.y = (global_row < M && global_col + 1 < K) ? A[global_row * K + global_col + 1] : 0.0f;
+                tmp.z = (global_row < M && global_col + 2 < K) ? A[global_row * K + global_col + 2] : 0.0f;
+                tmp.w = (global_row < M && global_col + 3 < K) ? A[global_row * K + global_col + 3] : 0.0f;
+            }
 
             a[col + 0][row] = tmp.x;
             a[col + 1][row] = tmp.y;
